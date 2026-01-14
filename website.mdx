@@ -1,0 +1,52 @@
+---
+title: 'Website Architecture'
+description: 'Technical overview of the hapara.fail v2 platform'
+icon: 'globe'
+---
+
+## Tech Stack
+
+The v2 platform is designed for performance and privacy, leveraging edge computing.
+
+- **Runtime**: [Cloudflare Workers](https://workers.cloudflare.com/)
+- **Static Assets**: [Workers Assets](https://developers.cloudflare.com/workers/static-assets/)
+- **Language**: TypeScript (Backend), Vanilla JS/HTML/CSS (Frontend)
+- **Deployment**: Wrangler
+
+## Routing
+
+Routes are handled in `src/worker.ts`. The Worker serves both static assets (via Workers Assets binding) and dynamic routes.
+
+| Route           | Description             |
+| :-------------- | :---------------------- |
+| `/`             | Homepage                |
+| `/services/dns` | DNS Service Page        |
+| `/tool/gfu`     | Google Form Unlocker    |
+| `/tool/wifi`    | WiFi Password Extractor |
+| `/blog/*`       | Dynamic Blog Routing    |
+
+## Development
+
+### Prerequisites
+
+- Node.js v18+
+- npm/yarn
+
+### Local Setup
+
+```bash
+git clone https://github.com/hapara-fail/website.git
+cd website
+npm install
+npm run dev
+```
+
+### Deployment
+
+Deployments are managed via Wrangler.
+
+```bash
+npm run deploy
+```
+
+_Requires authentication via `wrangler login`._

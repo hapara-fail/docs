@@ -1,0 +1,524 @@
+---
+title: 'DNS Service'
+description: 'A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and Google Cloud.'
+icon: 'server'
+---
+
+## Overview
+
+This guide walks you through setting up a private, secure DNS server using **AdGuard Home** (for ad-blocking and management) backed by **Unbound** (for recursive DNS resolution). This configuration enhances privacy by querying root DNS servers directly instead of relying on third-party providers.
+
+<Tip>
+  **Why this setup?**
+
+- **Privacy**: No single DNS provider sees your entire query history
+- **Security**: Direct DNSSEC validation from root servers
+- **Control**: Custom blocklists and filtering rules
+- **Performance**: Intelligent caching and prefetching
+
+</Tip>
+
+---
+
+## Prerequisites
+
+### VM Setup
+
+We recommend Google Cloud Platform (GCP) for hosting, leveraging their free tier:
+
+1. **Google Cloud E2-micro Instance**:
+   - **Region**: `us-east-1` (or your preferred region)
+   - **Disk**: 30GB Standard Persistent Disk
+   - **OS**: Debian 12 (Bookworm) or 13 (Trixie) x64
+   - **Cost**: Free tier eligible
+2. **Create VM** and reserve a **Static IP address**
+
+### GCP Firewall Policies
+
+Create the following firewall rules in your VPC network:
+
+<Steps>
+  <Step title="Allow DNS Traffic">
+    **Rule Name**: `allow-dns-traffic`
+    
+    - **Source IP ranges**: `0.0.0.0/0`
+    - **Protocols/Ports**: Allow `tcp:53` and `udp:53`
+
+  </Step>
+
+  <Step title="Temporary Setup Access">
+    **Rule Name**: `delete-later` (Remove after setup)
+
+    - **Source IP ranges**: `[YOUR HOME IP ADDRESS]`
+    - **Protocols/Ports**: Allow `tcp:3000` (AdGuard Home initial setup)
+
+  </Step>
+
+  <Step title="Web Interface">
+    **Rule Name**: `default-allow-http`
+    
+    - **Source IP ranges**: `0.0.0.0/0`
+    - **Protocols/Ports**: Allow `tcp:80`
+
+  </Step>
+</Steps>
+
+### Update Your VM
+
+SSH into your new VM and prepare the system:
+
+```bash
+# Remove GCP CLI tools that might cause package conflicts (not needed for our setup)
+sudo dpkg --remove --force-all google-cloud-cli google-cloud-cli-anthoscli
+
+# Update system packages
+sudo apt update
+sudo apt upgrade -y
+```
+
+<Note>Press `Y` when prompted to confirm package upgrades. This may take a few minutes.</Note>
+
+---
+
+## Step 1: Install AdGuard Home
+
+AdGuard Home provides the web interface, ad-blocking, and DNS query logging.
+
+```bash
+wget --no-verbose -O - https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
+```
+
+### Initial Configuration
+
+1. Navigate to `http://[YOUR_EXTERNAL_IP]:3000` in your browser
+2. Proceed through the setup wizard to **Step 3**
+
+<Warning>
+**Port 53 conflict?** If you see `bind: address already in use`, run these commands to disable `systemd-resolved`:
+
+```bash
+sudo systemctl stop systemd-resolved
+sudo systemctl disable systemd-resolved
+sudo rm -f /etc/resolv.conf && echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+```
+
+Then restart AdGuard Home: `sudo service AdGuardHome restart`
+
+</Warning>
+
+### DNS Settings Configuration
+
+Configure **Settings → DNS Settings** with these values:
+
+| Setting                         | Value                                  | Why?                                                  |
+| ------------------------------- | -------------------------------------- | ----------------------------------------------------- |
+| **Upstream DNS servers**        | `https://dns.cloudflare.com/dns-query` | Temporary until Unbound is installed                  |
+| **Mode**                        | ☑ Parallel requests                    | Best stability even with one upstream                 |
+| **Fallback DNS servers**        | `https://dns.cloudflare.com/dns-query` | Backup if primary fails                               |
+| **Rate limit**                  | `15`                                   | Limits queries per second per client (DoS protection) |
+| **Subnet prefix length (IPv4)** | `32`                                   | Tracks individual devices, not subnets                |
+| **DNSSEC**                      | ☑ Enable DNSSEC                        | Validates DNS responses aren't tampered               |
+| **IPv6 addresses**              | ☑ Disable resolving                    | Prevents timeouts if IPv6 isn't configured            |
+
+**Blocking & Cache Settings:**
+
+| Setting                  | Value                    | Why?                                              |
+| ------------------------ | ------------------------ | ------------------------------------------------- |
+| **Blocked response TTL** | `86400` (24 hours)       | How long clients cache blocked domains            |
+| **Cache size**           | `20000000` bytes (≈19MB) | Initial cache; we'll optimize later with Unbound  |
+| **Override minimum TTL** | `300` (5 minutes)        | Prevents too-frequent re-queries                  |
+| **Override maximum TTL** | `86400` (24 hours)       | Limits stale data                                 |
+| **Optimistic Caching**   | ☑ Enable                 | Serves cached data while refreshing in background |
+
+<Note>We'll reconfigure caching in Step 3 after installing Unbound for optimal performance.</Note>
+
+### Add Blocklists
+
+Go to **Filters → DNS Blocklists** and add these lists:
+
+<Tabs>
+  <Tab title="hapara.fail Blocklist">
+    - **Name**: `hapara.fail Blocklist`
+    - **URL**:
+      `https://raw.githubusercontent.com/hapara-fail/blocklist/main/blocklist.txt`
+
+    Our custom blocklist targeting surveillance and tracking domains.
+
+  </Tab>
+
+  <Tab title="HaGeZi Normal">
+    - **Name**: `HaGeZi Normal`
+    - **URL**:
+      `https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/multi.txt`
+
+    Comprehensive multi-category blocklist (ads, trackers, malware).
+
+  </Tab>
+</Tabs>
+
+Click **Save** after adding each list. AdGuard will download and compile them.
+
+---
+
+## Step 2: Set Up Unbound (Recursive Resolver)
+
+Unbound replaces third-party DNS providers by querying root servers directly, enhancing privacy and control.
+
+### Install Unbound
+
+```bash
+sudo apt update
+sudo apt install unbound -y
+```
+
+### Configure Unbound
+
+We'll run Unbound on port `5335` to avoid conflicts with AdGuard Home (which uses port `53`).
+
+1. Create the configuration file:
+
+   ```bash
+   sudo nano /etc/unbound/unbound.conf.d/recursive.conf
+   ```
+
+2. Paste this optimized configuration:
+
+```yaml
+server:
+  # Logging
+  verbosity: 0 # Minimal logging (use syslog)
+
+  # Network Configuration
+  port: 5335 # Non-standard port (AdGuard forwards here)
+  interface: 127.0.0.1 # Listen on localhost only (security)
+  do-ip4: yes
+  do-udp: yes
+  do-tcp: yes
+  do-ip6: no # Disable IPv6 if not in use
+
+  # Root Hints (list of root DNS servers)
+  root-hints: '/var/lib/unbound/root.hints'
+
+  # Security & Privacy
+  harden-glue: yes # Only trust glue in-zone
+  harden-dnssec-stripped: yes # Reject responses without DNSSEC
+  use-caps-for-id: yes # Randomize query capitalization (security)
+  edns-buffer-size: 1232 # Prevent fragmentation
+  hide-identity: yes # Don't reveal server identity
+  hide-version: yes # Don't reveal software version
+
+  # Performance
+  prefetch: yes # Refresh popular cached items before expiry
+  num-threads: 1 # 1 for low-power VMs, 2+ for powerful servers
+  so-rcvbuf: 1m # Socket receive buffer (performance)
+
+  # Access Control
+  access-control: 127.0.0.0/8 allow # Only localhost can query
+```
+
+3. Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`)
+
+<Tip>
+  **What is "prefetching"?** Unbound refreshes frequently-used DNS records before they expire,
+  keeping your most-visited sites blazing fast.
+</Tip>
+
+### Download Root Hints
+
+Root hints tell Unbound where the authoritative root DNS servers are:
+
+```bash
+sudo wget https://www.internic.net/domain/named.root -O /var/lib/unbound/root.hints
+```
+
+**Optional but recommended:** Auto-update root hints monthly via cron:
+
+```bash
+sudo crontab -e
+```
+
+Add this line to the bottom:
+
+```bash
+0 0 1 * * wget -O /var/lib/unbound/root.hints https://www.internic.net/domain/named.root
+```
+
+<Note>This cron job runs at midnight on the 1st of each month.</Note>
+
+### Start and Test Unbound
+
+1. Restart the service:
+
+   ```bash
+   sudo service unbound restart
+   ```
+
+2. Check service status:
+
+   ```bash
+   sudo service unbound status
+   ```
+
+   ✅ **Success**: You should see `active (running)`
+
+3. Test DNS resolution:
+
+   ```bash
+   dig @127.0.0.1 -p 5335 google.com
+   ```
+
+   ✅ **Success**: Look for `status: NOERROR` and an IP address in the `ANSWER SECTION`
+
+<Warning>
+**Troubleshooting**: If you see `connection timed out` or `SERVFAIL`, check your configuration file for syntax errors:
+
+```bash
+sudo unbound-checkconf /etc/unbound/unbound.conf.d/recursive.conf
+```
+
+</Warning>
+
+---
+
+## Step 3: Connect AdGuard Home to Unbound
+
+Now we'll point AdGuard Home to use your local Unbound instance instead of Cloudflare.
+
+### Update Upstream DNS
+
+1. In AdGuard Home, go to **Settings → DNS Settings**
+2. **Upstream DNS servers**:
+   - **Delete** all existing entries
+   - **Add only**: `127.0.0.1:5335`
+3. **Parallel requests**: Select **Parallel requests** (recommended for stability)
+4. **Bootstrap DNS servers**: These resolve IPs for DNS-over-HTTPS/TLS hostnames (not needed for our IP-based upstream, but good practice):
+   ```
+   9.9.9.9
+   1.1.1.1
+   ```
+5. **Private Reverse DNS servers**: (Optional) Point to your router if you want local hostname resolution (e.g., `192.168.1.1`)
+6. **DNSSEC**: ☑ **Enable** (Unbound validates, but this provides a second check)
+7. Click **Test Upstreams** → Should show "Server is working" ✅
+8. Click **Apply**
+
+### Optimize Cache Settings
+
+Since Unbound has superior caching with prefetching, we'll minimize AdGuard's cache:
+
+1. Go to **Settings → DNS Settings → DNS Cache Configuration**
+2. Configure:
+
+| Setting                  | Value               | Why?                              |
+| ------------------------ | ------------------- | --------------------------------- |
+| **Cache size**           | `4194304` (4MB)     | Small cache keeps UI responsive   |
+| **Override minimum TTL** | `0` (empty/default) | Let Unbound control TTL           |
+| **Override maximum TTL** | `0` (empty/default) | Let Unbound control TTL           |
+| **Optimistic caching**   | ☐ **Disable**       | Unbound's prefetching is superior |
+
+<Tip>
+  **Why disable optimistic caching?** Unbound's prefetch mechanism proactively refreshes popular
+  records before they expire—more intelligent than AdGuard's optimistic cache.
+</Tip>
+
+---
+
+## Step 4: Secure with SSL/TLS (DoH & DoT)
+
+Enable encrypted DNS protocols: DNS-over-HTTPS (DoH) and DNS-over-TLS (DoT).
+
+<Warning>
+  **Prerequisite**: You must have an **A record** pointing from your domain (e.g.,
+  `dns.hapara.fail`) to your VM's external IP address before proceeding.
+</Warning>
+
+### Install Certbot
+
+```bash
+sudo apt update
+sudo apt install certbot -y
+```
+
+### Obtain SSL Certificate
+
+Let's Encrypt needs port 80 to verify domain ownership. We'll temporarily stop AdGuard Home:
+
+```bash
+# Stop AdGuard Home
+sudo service AdGuardHome stop
+
+# Request certificate (replace example.org with your domain)
+sudo certbot certonly --standalone -d example.org
+
+# Restart AdGuard Home
+sudo service AdGuardHome start
+```
+
+<Note>Follow the Certbot prompts to enter your email and agree to the Terms of Service.</Note>
+
+### Configure Encryption in AdGuard
+
+1. Go to **Settings → Encryption Settings**
+2. Configure:
+
+| Setting                | Value                           |
+| ---------------------- | ------------------------------- |
+| **Enable Encryption**  | ☑ Checked                       |
+| **Server Name**        | `example.org` (your domain)     |
+| **HTTPS Port**         | `443` (DNS-over-HTTPS)          |
+| **DNS-over-TLS Port**  | `853` (DNS-over-TLS)            |
+| **DNS-over-QUIC Port** | `853` (DNS-over-QUIC, uses UDP) |
+
+3. **Certificate & Key Paths** (⚠️ **Use file paths, NOT file contents**):
+
+   - **Certificate path**: `/etc/letsencrypt/live/example.org/fullchain.pem`
+   - **Private key path**: `/etc/letsencrypt/live/example.org/privkey.pem`
+
+4. Click **Save Settings**
+
+<Tip>
+  **Why use paths instead of pasting contents?** When Certbot renews your certificate (every 90
+  days), AdGuard will automatically use the new files.
+</Tip>
+
+### Automate Certificate Renewal
+
+Create a post-renewal hook to restart AdGuard Home automatically:
+
+```bash
+# Create hook script
+sudo nano /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
+```
+
+Paste this content:
+
+```bash
+#!/bin/bash
+service AdGuardHome restart
+```
+
+Make it executable:
+
+```bash
+sudo chmod +x /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
+```
+
+<Note>
+  Certbot automatically renews certificates. This hook ensures AdGuard reloads the new certificate
+  without manual intervention.
+</Note>
+
+### Update GCP Firewall Rules
+
+1. **Delete the temporary `delete-later` rule** (port 3000 is no longer needed)
+2. **Create `allow-secure-dns` rule**:
+   - **Source**: `0.0.0.0/0`
+   - **TCP ports**: `443`, `853`
+   - **UDP ports**: `853`
+
+<Warning>
+  **Security Note**: Opening these ports to `0.0.0.0/0` allows the entire internet to use your DNS
+  server. Ensure you have strong authentication on the AdGuard web interface.
+</Warning>
+
+---
+
+## Step 5: Protect with Fail2Ban
+
+Prevent brute-force attacks on the AdGuard web interface.
+
+### Install Fail2Ban
+
+```bash
+sudo apt update
+sudo apt install fail2ban -y
+```
+
+### Create the Filter
+
+This pattern matches failed login attempts in AdGuard's logs:
+
+```bash
+sudo nano /etc/fail2ban/filter.d/adguard-web.conf
+```
+
+Paste:
+
+```ini
+[Definition]
+# Matches: [error] POST .../control/login: from ip 1.2.3.4: invalid username or password
+failregex = ^.*\[error\] POST .* /control/login: from ip <HOST>: invalid username or password.*$
+ignoreregex =
+```
+
+### Create the Jail
+
+Configure the ban policy:
+
+```bash
+sudo nano /etc/fail2ban/jail.local
+```
+
+Paste at the bottom:
+
+```ini
+[adguard-web]
+enabled  = true
+port     = 80,443,3000,8080    # Ports to monitor
+protocol = tcp
+filter   = adguard-web          # Use filter we just created
+logpath  = /opt/AdGuardHome/AdGuardHome.log
+maxretry = 3                    # Ban after 3 failed attempts
+findtime = 600                  # Within 10 minutes
+bantime  = 3600                 # Ban for 1 hour
+action   = iptables-allports    # Block ALL traffic from that IP
+```
+
+<Tip>
+  **What does `iptables-allports` do?** It doesn't just block web access—it blocks SSH, DNS,
+  everything from that IP for maximum security.
+</Tip>
+
+### Enable and Start
+
+```bash
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+sudo systemctl restart fail2ban
+```
+
+### Verify It's Working
+
+```bash
+sudo fail2ban-client status adguard-web
+```
+
+✅ **Success**: You should see:
+
+```
+Status for the jail: adguard-web
+|- Filter
+|  |- Currently failed: 0
+|  |- Total failed:     0
+|  `- File list:        /opt/AdGuardHome/AdGuardHome.log
+`- Actions
+   |- Currently banned: 0
+   |- Total banned:     0
+   `- Banned IP list:
+```
+
+---
+
+## ✅ Setup Complete!
+
+Your DNS server is now fully operational with:
+
+- ✅ **Privacy**: Direct recursive resolution via Unbound
+- ✅ **Security**: DNSSEC validation, encrypted protocols (DoH/DoT/DoQ)
+- ✅ **Ad-blocking**: Custom blocklists via AdGuard Home
+- ✅ **Protection**: Fail2Ban guarding against brute-force attacks
+- ✅ **Automation**: Auto-renewing SSL certificates
+
+<Note>
+  **Need help?** Check the [AdGuard Home documentation](https://adguard-dns.io/kb/) or the [Unbound
+  documentation](https://unbound.docs.nlnetlabs.nl/).
+</Note>

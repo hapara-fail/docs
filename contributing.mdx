@@ -1,0 +1,37 @@
+---
+title: 'Contributing'
+description: 'Guidelines for contributing to the hapara.fail ecosystem'
+icon: 'github'
+---
+
+## Project Structure
+
+The project is a monorepo built on **Cloudflare Workers**.
+
+- **`src/site/`**: Static frontend assets (HTML, CSS, JS, Images).
+- **`src/worker.ts`**: Backend routing and logic (TypeScript).
+- **`wrangler.jsonc`**: Cloudflare configuration.
+
+## Workflow
+
+1. **Fork & Branch**: Create a feature branch (e.g., `fix-dark-mode` or `feat-new-tool`).
+2. **Develop**:
+   - Frontend changes: Edit files in `src/site/`.
+   - Backend logic: Edit `src/worker.ts`.
+3. **Test Locally**:
+   ```bash
+   npm run dev
+   ```
+   Access at `http://127.0.0.1:8787`.
+4. **Pull Request**: Submit PR with clear description of changes.
+
+## Style Guidelines
+
+- **TypeScript**: Strict typing, descriptive variables.
+- **Frontend**: Dark/minimalist aesthetic, responsive design (mobile-first).
+- **Content**: Factual, privacy-focused, no speculation.
+
+## Reporting Issues
+
+- **Bugs**: Use the [Bug Report Template](https://github.com/hapara-fail/website/issues/new?template=bug-report.md). Include browser/device details.
+- **Features**: Use the [Feature Request Template](https://github.com/hapara-fail/website/issues/new?template=feature-request.md).

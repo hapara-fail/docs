@@ -1,0 +1,84 @@
+---
+title: 'Blocklist'
+description: 'Technical specifications and integration for the hapara.fail blocklist'
+icon: 'shield-halved'
+---
+
+## Specification
+
+The blocklist is a text file containing domain rules formatted for compatibility with standard ad-blocking engines.
+
+- **Syntax:** [Adblocking Plus (ABP)](https://adblockplus.org/filter-cheatsheet)
+- **Format:** `||domain.com^` (wildcard blocking)
+- **Update Frequency:** Continuous (Community-maintained)
+- **Source:** [GitHub Repository](https://github.com/hapara-fail/blocklist)
+
+### CDN Endpoint
+
+For integration, use the jsDelivr CDN endpoint for high availability and low latency:
+
+```
+https://cdn.jsdelivr.net/gh/hapara-fail/blocklist@main/blocklist.txt
+```
+
+## Compatibility
+
+The list is designed for engines that support ABP syntax for DNS or network-level blocking.
+
+### Supported Engines
+
+- **Pi-hole**
+- **AdGuard Home**
+- **uBlock Origin**
+- **Brave (Shields: Aggressive)**
+- **Little Snitch Mini**
+- **eBlocker**
+
+### Incompatible Engines
+
+_These engines do not fully support the required syntax._
+
+- DNSMasq / NextDNS / DNSCrypt
+- Hostfile-based blockers
+- pfBlockerNG / OPNsense
+
+## Integration
+
+### Pi-hole
+
+1. Navigate to **Group Management > Adlists**.
+2. Add the CDN URL.
+3. Update Gravity (`pihole -g`).
+
+### AdGuard Home
+
+1. Navigate to **Filters > DNS blocklists**.
+2. Click **Add blocklist > Add a custom list**.
+3. Enter `hapara.fail` as the name and the CDN URL as the URL.
+
+### uBlock Origin
+
+1. Open **Settings > Filter lists**.
+2. Scroll to **Custom** and click **Import**.
+3. Paste the CDN URL and click **Apply changes**.
+
+# Contributing
+
+We accept community contributions to keep the blocklist effective.
+
+## Reporting Issues
+
+- **[Request a Block](https://github.com/hapara-fail/blocklist/issues/new?template=service---domain-addition.md)**: Suggest a new service or domain.
+- **[Report False Positive](https://github.com/hapara-fail/blocklist/issues/new?template=false-positive---removal.md)**: Report broken legitimate sites.
+
+## Submitting Changes
+
+1. **Fork & Branch**: Create a new branch for your changes.
+2. **Edit `blocklist.txt`**:
+   - Use **Adblock Plus Syntax**: `||domain.com^`
+   - One domain per line.
+   - Place under correct Vendor Header.
+3. **Verify**: Check for trailing spaces or accidental deletions.
+4. **Pull Request**: Submit PR with a clear description.
+
+For full details, see our [Contributing Guidelines](https://github.com/hapara-fail/blocklist/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/hapara-fail/blocklist/blob/main/CODE_OF_CONDUCT.md).

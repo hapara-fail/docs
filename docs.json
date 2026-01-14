@@ -11,63 +11,32 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Docs",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Overview",
             "pages": [
               "index",
-              "quickstart",
-              "development"
-            ]
-          },
-          {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "website",
+              "blocklist"
             ]
           },
           {
             "group": "Self-Hosting",
             "pages": [
-              "self-hosting"
+              "self-hosting/dns",
+              "self-hosting/website"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "contributing"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Website",
-          "href": "https://www.hapara.fail",
-          "icon": "globe"
-        },
-        {
-          "anchor": "Discord",
-          "href": "https://discord.gg/KA66dHUF4P",
-          "icon": "discord"
-        }
-      ]
-    }
+    ]
   },
 
   "navbar": {
@@ -77,13 +46,7 @@
   "contextual": {
     "options": [
      "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
+     "view"
    ]
   },
   "footer": {
