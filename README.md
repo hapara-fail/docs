@@ -1,43 +1,107 @@
-# Mintlify Starter Kit
+# hapara.fail Docs
 
-Use the starter kit to get your docs deployed and ready to customize.
+Official documentation for the **hapara.fail** ecosystem, covering our tools, blocklists, and self-hosting guides. This repository hosts main documentation site, built to be clean, fast, and easy to navigate.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+**Live Site:** **[https://docs.hapara.fail](https://docs.hapara.fail)**
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+---
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+## 🚀 Project Overview
 
-## Development
+The documentation serves as the central knowledge base for:
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+- **Project Details:** Information about the website and blocklist initiatives.
+- **Self-Hosting:** Comprehensive guides for setting up your own DNS and website instances.
+- **Contributing:** Guidelines for the community to get involved.
+
+---
+
+## ✨ Key Features
+
+- **MDX Support:** Rich content with interactive components.
+- **Fast Navigation:** Instant page loads and smooth transitions.
+- **Full-Text Search:** Powerful search to find information quickly.
+
+---
+
+## 💻 Technology Stack
+
+- **Platform:** [Mintlify](https://mintlify.com/) - Intelligent documentation platform.
+
+---
+
+## 📁 Project Structure
 
 ```
-npm i -g mint
+├── docs.json           # Mintlify configuration (navigation, theme, etc.)
+├── favicon.svg         # Site favicon
+├── index.mdx           # Landing page
+├── website.mdx         # Website project overview
+├── blocklist.mdx       # Blocklist project overview
+├── self-hosting/       # Self-hosting guides
+│   ├── dns.mdx         # DNS setup guide
+│   └── website.mdx     # Website setup guide
+├── images/             # Static assets
+└── README.md           # This file
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+---
 
-```
-mint dev
-```
+## 🗺️ Routes
 
-View your local preview at `http://localhost:3000`.
+- `/` - Home
+- `/website` - Website Overview
+- `/blocklist` - Blocklist Overview
+- `/self-hosting/dns` - DNS Self-Hosting Guide
+- `/self-hosting/website` - Website Self-Hosting Guide
+- `/contributing` - Contributing Info
 
-## Publishing changes
+---
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+## 🛠️ Development
 
-## Need help?
+### Prerequisites
 
-### Troubleshooting
+- Node.js (v18 or higher recommended)
+- [Mintlify CLI](https://www.npmjs.com/package/mint)
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+### Local Setup
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/hapara-fail/docs.git
+    cd docs
+    ```
+2.  **Install Mintlify CLI (global):**
+    ```bash
+    npm i -g mint
+    ```
+3.  **Start the local development server:**
+    ```bash
+    mint dev
+    ```
+    This command will start the documentation server locally, typically at `http://localhost:3000`.
+
+---
+
+## ☁️ Deployment
+
+Changes are automatically deployed to production via the Mintlify GitHub App when pushing to the `main` branch.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please check out our **[Contributing Guidelines](contributing)** for more details on how to help improve our documentation.
+
+If you spot an error or have a suggestion:
+
+- **Open an Issue** on GitHub.
+- **Submit a Pull Request** with your fixes.
+- Join our [Discord server](https://www.hapara.fail/discord) to discuss.
+
+---
+
+## 📄 License
+
+This project is licensed under the terms specified at [www.hapara.fail/license](https://www.hapara.fail/license).

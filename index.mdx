@@ -5,25 +5,29 @@ icon: 'code'
 mode: 'wide'
 ---
 
-Welcome to the **hapara.fail Developer Hub**. This resource provides technical specifications, integration guides, and architecture details for developers looking to understand, contribute to, or self-host our tools.
+Welcome to the **hapara.fail Developer Hub**.
+
+This documentation serves as the comprehensive technical reference for the entire hapara.fail ecosystem. Whether you are a privacy advocate looking to contribute, a student auditing our code, or a sysadmin self-hosting our tools, you'll find everything you need here.
+
+<Note>
+  We are an open-source initiative dedicated to exposing and circumventing student surveillance
+  technology.
+</Note>
 
 ## Core Components
 
 <CardGroup cols={2}>
-  <Card title="Blocklist" icon="shield-halved" href="/blocklist">
-    Integration details for our unified DNS blocklist (Adblock Plus syntax).
-  </Card>
   <Card title="Website Architecture" icon="globe" href="/website">
     Technical overview of our Cloudflare Workers-based v2 platform.
+  </Card>
+  <Card title="Blocklist" icon="shield-halved" href="/blocklist">
+    Integration details for our unified DNS blocklist (Adblock Plus syntax).
   </Card>
   <Card title="Self-Host DNS" icon="server" href="/self-hosting/dns">
     Deploy your own recursive DNS resolver using AdGuard Home and Unbound.
   </Card>
   <Card title="Self-Host Website" icon="cloud" href="/self-hosting/website">
     Deploy your own instance of the hapara.fail website on Cloudflare.
-  </Card>
-  <Card title="Contributing" icon="github" href="/contributing">
-    Guidelines for code contributions, issue reporting, and style standards.
   </Card>
 </CardGroup>
 

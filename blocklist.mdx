@@ -23,44 +23,51 @@ https://cdn.jsdelivr.net/gh/hapara-fail/blocklist@main/blocklist.txt
 
 ## Compatibility
 
-The list is designed for engines that support ABP syntax for DNS or network-level blocking.
+The list is designed for engines that support **Adblock Plus (ABP)** syntax for DNS or network-level blocking.
 
-### Supported Engines
-
-- **Pi-hole**
-- **AdGuard Home**
-- **uBlock Origin**
-- **Brave (Shields: Aggressive)**
-- **Little Snitch Mini**
-- **eBlocker**
-
-### Incompatible Engines
-
-_These engines do not fully support the required syntax._
-
-- DNSMasq / NextDNS / DNSCrypt
-- Hostfile-based blockers
-- pfBlockerNG / OPNsense
+<CardGroup cols={2}>
+  <Card title="Supported Software" icon="check" color="#16A34A">
+    <ul>
+      <li>Pi-hole</li>
+      <li>AdGuard Home</li>
+      <li>uBlock Origin</li>
+      <li>Brave (Shields: Aggressive)</li>
+      <li>Little Snitch Mini</li>
+      <li>eBlocker</li>
+    </ul>
+  </Card>
+  <Card title="Incompatible" icon="xmark" color="#DC2626">
+    <ul>
+      <li>DNSMasq / NextDNS / DNSCrypt</li>
+      <li>Hostfile-based blockers</li>
+      <li>pfBlockerNG / OPNsense</li>
+      <li>Standard DNS Resolvers (Bind, Unbound)</li>
+    </ul>
+  </Card>
+</CardGroup>
 
 ## Integration
 
-### Pi-hole
+<Steps>
+  <Step title="Pi-hole">
+    1. Navigate to **Group Management > Adlists**.
+    2. Add the [CDN URL](#cdn-endpoint) as a new list.
+    3. Update Gravity (`pihole -g`).
+  </Step>
 
-1. Navigate to **Group Management > Adlists**.
-2. Add the CDN URL.
-3. Update Gravity (`pihole -g`).
+  <Step title="AdGuard Home">
+    1. Navigate to **Filters > DNS blocklists**.
+    2. Click **Add blocklist > Add a custom list**.
+    3. Enter `hapara.fail` as the name and the [CDN URL](#cdn-endpoint).
+    4. Click **Save**.
+  </Step>
 
-### AdGuard Home
-
-1. Navigate to **Filters > DNS blocklists**.
-2. Click **Add blocklist > Add a custom list**.
-3. Enter `hapara.fail` as the name and the CDN URL as the URL.
-
-### uBlock Origin
-
-1. Open **Settings > Filter lists**.
-2. Scroll to **Custom** and click **Import**.
-3. Paste the CDN URL and click **Apply changes**.
+  <Step title="uBlock Origin">
+    1. Open **Settings > Filter lists**.
+    2. Scroll to **Custom** and click **Import**.
+    3. Paste the [CDN URL](#cdn-endpoint) and click **Apply changes**.
+  </Step>
+</Steps>
 
 # Contributing
 

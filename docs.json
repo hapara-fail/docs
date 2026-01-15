@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "hapara.fail Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#524af2",
+    "light": "#a855f7",
+    "dark": "#3934A9"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -17,7 +17,7 @@
             "group": "Overview",
             "pages": [
               "index",
-              "website",
+              "architecture",
               "blocklist"
             ]
           },
@@ -26,12 +26,6 @@
             "pages": [
               "self-hosting/dns",
               "self-hosting/website"
-            ]
-          },
-          {
-            "group": "Resources",
-            "pages": [
-              "contributing"
             ]
           }
         ]

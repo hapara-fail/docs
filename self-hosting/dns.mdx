@@ -1,5 +1,5 @@
 ---
-title: 'DNS Service'
+title: 'DNS Resolver'
 description: 'A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and Google Cloud.'
 icon: 'server'
 ---
@@ -492,7 +492,7 @@ sudo systemctl restart fail2ban
 sudo fail2ban-client status adguard-web
 ```
 
-✅ **Success**: You should see:
+**Success**: You should see:
 
 ```
 Status for the jail: adguard-web
@@ -508,15 +508,15 @@ Status for the jail: adguard-web
 
 ---
 
-## ✅ Setup Complete!
+## Setup Complete!
 
 Your DNS server is now fully operational with:
 
-- ✅ **Privacy**: Direct recursive resolution via Unbound
-- ✅ **Security**: DNSSEC validation, encrypted protocols (DoH/DoT/DoQ)
-- ✅ **Ad-blocking**: Custom blocklists via AdGuard Home
-- ✅ **Protection**: Fail2Ban guarding against brute-force attacks
-- ✅ **Automation**: Auto-renewing SSL certificates
+- **Privacy**: Direct recursive resolution via Unbound
+- **Security**: DNSSEC validation, encrypted protocols (DoH/DoT/DoQ)
+- **Ad-blocking**: Custom blocklists via AdGuard Home
+- **Protection**: Fail2Ban guarding against brute-force attacks
+- **Automation**: Auto-renewing SSL certificates
 
 <Note>
   **Need help?** Check the [AdGuard Home documentation](https://adguard-dns.io/kb/) or the [Unbound

@@ -1,0 +1,81 @@
+---
+title: 'Website Architecture'
+description: 'Technical overview of the hapara.fail v2 platform'
+icon: 'sitemap'
+---
+
+## Tech Stack
+
+The v2 platform is designed for performance and privacy, leveraging edge computing.
+
+<CardGroup cols={2}>
+  <Card title="Runtime" icon="cloudflare">
+    Cloudflare Workers (Edge Serverless)
+  </Card>
+  <Card title="Language" icon="js">
+    TypeScript (Backend) & Vanilla JS (Frontend)
+  </Card>
+  <Card title="Deployment" icon="rocket">
+    Wrangler 4 (Cloudflare CLI)
+  </Card>
+  <Card title="Assets" icon="images">
+    Workers Assets (Static Hosting)
+  </Card>
+</CardGroup>
+
+## Routing
+
+Routes are handled in `src/worker.ts`. The Worker serves both static assets (via Workers Assets binding) and dynamic routes.
+
+| Route           | Description             |
+| :-------------- | :---------------------- |
+| `/`             | Homepage                |
+| `/about`        | About page              |
+| `/services/dns` | DNS Service Page        |
+| `/tool/gfu`     | Google Form Unlocker    |
+| `/tool/wifi`    | WiFi Password Extractor |
+| `/blog/*`       | Dynamic Blog Routing    |
+| `/contribute`   | Contribute page         |
+| `/terms`        | Terms of Service        |
+| `/privacy`      | Privacy Policy          |
+| `/license`      | License information     |
+
+### Shortcuts & Redirects
+
+- `/bypass` → `/services/dns`
+- `/dns` → `/services/dns`
+- `/forms` → `/tool/gfu`
+- `/wifi` → `/tool/wifi`
+- `/discord` → Discord Invite
+- `/github` → GitHub Profile
+
+## Development
+
+### Prerequisites
+
+- Node.js v18+
+- npm/yarn
+
+### Local Setup
+
+<Steps>
+  <Step title="Clone">
+    Clone the repository to your local machine: ```bash git clone
+    https://github.com/hapara-fail/website.git cd website ```
+  </Step>
+  <Step title="Install">Install dependencies: ```bash npm install ```</Step>
+  <Step title="Run">
+    Start the local development server: ```bash npm run dev ``` This uses Wrangler to build the
+    Worker and serve the site locally (typically `http://127.0.0.1:8787`).
+  </Step>
+</Steps>
+
+### Deployment
+
+Deployments are managed via Wrangler.
+
+```bash
+npm run deploy
+```
+
+_Requires authentication via `wrangler login`._
