@@ -92,7 +92,7 @@ Changes are automatically deployed to production via the Mintlify GitHub App whe
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please check out our **[Contributing Guidelines](contributing)** for more details on how to help improve our documentation.
+Contributions are welcome! Please check out our **[Contributing Guidelines](https://github.com/hapara-fail/docs/blob/main/CONTRIBUTING.md)** for more details on how to help improve our documentation.
 
 If you spot an error or have a suggestion:
 
