@@ -1,0 +1,56 @@
+name: Feature Request
+description: Suggest new guides, doc improvements, or site features
+title: "[FEAT] "
+labels: ["discussion", "enhancement"]
+assignees:
+  - nota9x
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Feature Request
+        Thank you for suggesting an improvement! Please fill out the form below.
+  
+  - type: input
+    id: idea-name
+    attributes:
+      label: "1. Idea Name"
+      description: "Short summary of your idea."
+      placeholder: "e.g., Add FAQ for DNS, Dark mode toggle improvement, New guide for Pi-hole"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: "2. Description"
+      description: "Explain your idea. If it's a new guide, what should it cover?"
+      placeholder: Tell us more about your idea
+    validations:
+      required: true
+  
+  - type: textarea
+    id: why-needed
+    attributes:
+      label: "3. Why do we need this?"
+      description: "How does this help users?"
+      placeholder: "e.g., Clarifies a confusing step, Makes navigation faster"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: implementation-ideas
+    attributes:
+      label: "4. Implementation Ideas (Optional)"
+      description: "Do you have any technical ideas or content drafts?"
+      placeholder: "e.g., I have a draft for the FAQ, Use this Mintlify component"
+    validations:
+      required: false
+  
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: "Confirmation"
+      options:
+        - label: "I have checked that this feature doesn't already exist."
+          required: true

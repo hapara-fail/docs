@@ -12,14 +12,14 @@ We have simplified our reporting process. Please use the direct links below to *
 
 If a page is broken, information is incorrect, or you spot a typo:
 
-- **[Click here to open a Bug Report](https://github.com/hapara-fail/docs/issues/new?template=bug_report.md)**
+- **[Click here to open a Bug Report](https://github.com/hapara-fail/docs/issues/new?template=bug_report.yml)**
 - **Crucial:** Please tell us which page is affected and provide as much detail as possible.
 
 ### 2. Suggesting Features & Content
 
 If you have an idea for a new guide, a section improvement, or a design change:
 
-- **[Click here to open a Feature Request](https://github.com/hapara-fail/docs/issues/new?template=feature_request.md)**
+- **[Click here to open a Feature Request](https://github.com/hapara-fail/docs/issues/new?template=feature_request.yml)**
 - We love community ideas! If you have specific text or structure in mind, please include it.
 
 ---
