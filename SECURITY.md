@@ -32,12 +32,12 @@ We have enabled **Private Vulnerability Reporting** for this repository. This is
 
 ### Method 2: Email Reporting
 
-If you are unable to use the GitHub reporting tool, please send vulnerability reports via email to **<security@a9x.pro>**.
+If you are unable to use the GitHub reporting tool, please send vulnerability reports via email to **[security@a9x.pro](mailto:security@a9x.pro)**.
 
 To ensure your report passes our spam filters and is routed correctly, please follow these steps:
 
 1.  **Subject Line:** Must contain `hapara.fail` and `vulnerability`.
-    - *Example:* `hapara.fail Docs vulnerability: Stored XSS via malicious MDX component`
+    - _Example:_ `hapara.fail Docs vulnerability: Stored XSS via malicious MDX component`
 2.  **Body Content:**
     - Type of issue (e.g., Cross-Site Scripting (XSS), Information Disclosure in `docs.json`, Open Redirect).
     - Full paths of source file(s) related to the manifestation of the issue.
@@ -56,7 +56,7 @@ To ensure your report passes our spam filters and is routed correctly, please fo
 
 ### If You Don't Hear Back (Email Only)
 
-If you reported via email and have not received a reply within **7 days**, please follow up with us again at <security@a9x.pro>. Please ensure the word "vulnerability" is in the subject line.
+If you reported via email and have not received a reply within **7 days**, please follow up with us again at [security@a9x.pro](mailto:security@a9x.pro). Please ensure the word "vulnerability" is in the subject line.
 
 ## Responsible Disclosure Guidelines
 
