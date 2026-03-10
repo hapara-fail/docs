@@ -1,7 +1,7 @@
 ---
-title: 'DNS Resolver'
-description: 'A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and Google Cloud.'
-icon: 'server'
+title: "DNS Resolver"
+description: "A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and Google Cloud."
+icon: "server"
 ---
 
 ## Overview
@@ -76,7 +76,10 @@ sudo apt update
 sudo apt upgrade -y
 ```
 
-<Note>Press `Y` when prompted to confirm package upgrades. This may take a few minutes.</Note>
+<Note>
+  Press `Y` when prompted to confirm package upgrades. This may take a few
+  minutes.
+</Note>
 
 ---
 
@@ -130,7 +133,10 @@ Configure **Settings → DNS Settings** with these values:
 | **Override maximum TTL** | `86400` (24 hours)       | Limits stale data                                 |
 | **Optimistic Caching**   | ☑ Enable                 | Serves cached data while refreshing in background |
 
-<Note>We'll reconfigure caching in Step 3 after installing Unbound for optimal performance.</Note>
+<Note>
+  We'll reconfigure caching in Step 3 after installing Unbound for optimal
+  performance.
+</Note>
 
 ### Add Blocklists
 
@@ -140,7 +146,7 @@ Go to **Filters → DNS Blocklists** and add these lists:
   <Tab title="hapara.fail Blocklist">
     - **Name**: `hapara.fail Blocklist`
     - **URL**:
-      `https://raw.githubusercontent.com/hapara-fail/blocklist/main/blocklist.txt`
+      `https://cdn.jsdelivr.net/gh/hapara-fail/blocklist@main/blocklist.txt`
 
     Our custom blocklist targeting surveillance and tracking domains.
 
@@ -197,7 +203,7 @@ server:
   do-ip6: no # Disable IPv6 if not in use
 
   # Root Hints (list of root DNS servers)
-  root-hints: '/var/lib/unbound/root.hints'
+  root-hints: "/var/lib/unbound/root.hints"
 
   # Security & Privacy
   harden-glue: yes # Only trust glue in-zone
@@ -219,8 +225,8 @@ server:
 3. Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`)
 
 <Tip>
-  **What is "prefetching"?** Unbound refreshes frequently-used DNS records before they expire,
-  keeping your most-visited sites blazing fast.
+  **What is "prefetching"?** Unbound refreshes frequently-used DNS records
+  before they expire, keeping your most-visited sites blazing fast.
 </Tip>
 
 ### Download Root Hints
@@ -316,8 +322,9 @@ Since Unbound has superior caching with prefetching, we'll minimize AdGuard's ca
 | **Optimistic caching**   | ☐ **Disable**       | Unbound's prefetching is superior |
 
 <Tip>
-  **Why disable optimistic caching?** Unbound's prefetch mechanism proactively refreshes popular
-  records before they expire—more intelligent than AdGuard's optimistic cache.
+  **Why disable optimistic caching?** Unbound's prefetch mechanism proactively
+  refreshes popular records before they expire—more intelligent than AdGuard's
+  optimistic cache.
 </Tip>
 
 ---
@@ -327,8 +334,8 @@ Since Unbound has superior caching with prefetching, we'll minimize AdGuard's ca
 Enable encrypted DNS protocols: DNS-over-HTTPS (DoH) and DNS-over-TLS (DoT).
 
 <Warning>
-  **Prerequisite**: You must have an **A record** pointing from your domain (e.g.,
-  `dns.hapara.fail`) to your VM's external IP address before proceeding.
+  **Prerequisite**: You must have an **A record** pointing from your domain
+  (e.g., `dns.hapara.fail`) to your VM's external IP address before proceeding.
 </Warning>
 
 ### Install Certbot
@@ -353,7 +360,10 @@ sudo certbot certonly --standalone -d example.org
 sudo service AdGuardHome start
 ```
 
-<Note>Follow the Certbot prompts to enter your email and agree to the Terms of Service.</Note>
+<Note>
+  Follow the Certbot prompts to enter your email and agree to the Terms of
+  Service.
+</Note>
 
 ### Configure Encryption in AdGuard
 
@@ -369,15 +379,14 @@ sudo service AdGuardHome start
 | **DNS-over-QUIC Port** | `853` (DNS-over-QUIC, uses UDP) |
 
 3. **Certificate & Key Paths** (⚠️ **Use file paths, NOT file contents**):
-
    - **Certificate path**: `/etc/letsencrypt/live/example.org/fullchain.pem`
    - **Private key path**: `/etc/letsencrypt/live/example.org/privkey.pem`
 
 4. Click **Save Settings**
 
 <Tip>
-  **Why use paths instead of pasting contents?** When Certbot renews your certificate (every 90
-  days), AdGuard will automatically use the new files.
+  **Why use paths instead of pasting contents?** When Certbot renews your
+  certificate (every 90 days), AdGuard will automatically use the new files.
 </Tip>
 
 ### Automate Certificate Renewal
@@ -403,8 +412,8 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
 ```
 
 <Note>
-  Certbot automatically renews certificates. This hook ensures AdGuard reloads the new certificate
-  without manual intervention.
+  Certbot automatically renews certificates. This hook ensures AdGuard reloads
+  the new certificate without manual intervention.
 </Note>
 
 ### Update GCP Firewall Rules
@@ -416,8 +425,9 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
    - **UDP ports**: `853`
 
 <Warning>
-  **Security Note**: Opening these ports to `0.0.0.0/0` allows the entire internet to use your DNS
-  server. Ensure you have strong authentication on the AdGuard web interface.
+  **Security Note**: Opening these ports to `0.0.0.0/0` allows the entire
+  internet to use your DNS server. Ensure you have strong authentication on the
+  AdGuard web interface.
 </Warning>
 
 ---
@@ -474,8 +484,8 @@ action   = iptables-allports    # Block ALL traffic from that IP
 ```
 
 <Tip>
-  **What does `iptables-allports` do?** It doesn't just block web access—it blocks SSH, DNS,
-  everything from that IP for maximum security.
+  **What does `iptables-allports` do?** It doesn't just block web access—it
+  blocks SSH, DNS, everything from that IP for maximum security.
 </Tip>
 
 ### Enable and Start
@@ -519,6 +529,7 @@ Your DNS server is now fully operational with:
 - **Automation**: Auto-renewing SSL certificates
 
 <Note>
-  **Need help?** Check the [AdGuard Home documentation](https://adguard-dns.io/kb/) or the [Unbound
+  **Need help?** Check the [AdGuard Home
+  documentation](https://adguard-dns.io/kb/) or the [Unbound
   documentation](https://unbound.docs.nlnetlabs.nl/).
 </Note>
