@@ -102,7 +102,7 @@ wget --no-verbose -O - https://raw.githubusercontent.com/AdguardTeam/AdGuardHome
 ```bash
 sudo systemctl stop systemd-resolved
 sudo systemctl disable systemd-resolved
-sudo rm -f /etc/resolv.conf && echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+sudo rm -f /etc/resolv.conf && echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf
 ```
 
 Then restart AdGuard Home: `sudo service AdGuardHome restart`
@@ -222,7 +222,7 @@ server:
   access-control: 127.0.0.0/8 allow # Only localhost can query
 ```
 
-3. Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`)
+3. Save and exit (`Ctrl+X`, `Y`, `Enter`)
 
 <Tip>
   **What is "prefetching"?** Unbound refreshes frequently-used DNS records
@@ -391,28 +391,41 @@ sudo service AdGuardHome start
 
 ### Automate Certificate Renewal
 
-Create a post-renewal hook to restart AdGuard Home automatically:
-
+Because AdGuard Home occupies port 80, Certbot needs AGH to be stopped before it can complete the HTTP-01 challenge. Create a pre and post hook to handle this automatically:
 ```bash
-# Create hook script
-sudo nano /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
+# Create pre-renewal hook (stops AGH before renewal)
+sudo nano /etc/letsencrypt/renewal-hooks/pre/stop-adguard.sh
 ```
 
 Paste this content:
-
 ```bash
 #!/bin/bash
-service AdGuardHome restart
+systemctl stop AdGuardHome
+```
+```bash
+# Create post-renewal hook (starts AGH after renewal)
+sudo nano /etc/letsencrypt/renewal-hooks/post/start-adguard.sh
 ```
 
-Make it executable:
-
+Paste this content:
 ```bash
-sudo chmod +x /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
+#!/bin/bash
+systemctl start AdGuardHome
+```
+
+Make both scripts executable:
+```bash
+sudo chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-adguard.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/post/start-adguard.sh
+```
+
+Verify everything works with a dry run:
+```bash
+sudo certbot renew --dry-run
 ```
 
 <Note>
-  Certbot automatically renews certificates. This hook ensures AdGuard reloads
+  Certbot automatically renews certificates. These hooks ensure AdGuard reloads
   the new certificate without manual intervention.
 </Note>
 
@@ -432,92 +445,6 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
 
 ---
 
-## Step 5: Protect with Fail2Ban
-
-Prevent brute-force attacks on the AdGuard web interface.
-
-### Install Fail2Ban
-
-```bash
-sudo apt update
-sudo apt install fail2ban -y
-```
-
-### Create the Filter
-
-This pattern matches failed login attempts in AdGuard's logs:
-
-```bash
-sudo nano /etc/fail2ban/filter.d/adguard-web.conf
-```
-
-Paste:
-
-```ini
-[Definition]
-# Matches: [error] POST .../control/login: from ip 1.2.3.4: invalid username or password
-failregex = ^.*\[error\] POST .* /control/login: from ip <HOST>: invalid username or password.*$
-ignoreregex =
-```
-
-### Create the Jail
-
-Configure the ban policy:
-
-```bash
-sudo nano /etc/fail2ban/jail.local
-```
-
-Paste at the bottom:
-
-```ini
-[adguard-web]
-enabled  = true
-port     = 80,443,3000,8080    # Ports to monitor
-protocol = tcp
-filter   = adguard-web          # Use filter we just created
-logpath  = /opt/AdGuardHome/AdGuardHome.log
-maxretry = 3                    # Ban after 3 failed attempts
-findtime = 600                  # Within 10 minutes
-bantime  = 3600                 # Ban for 1 hour
-action   = iptables-allports    # Block ALL traffic from that IP
-```
-
-<Tip>
-  **What does `iptables-allports` do?** It doesn't just block web access—it
-  blocks SSH, DNS, everything from that IP for maximum security.
-</Tip>
-
-### Enable and Start
-
-```bash
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-sudo systemctl restart fail2ban
-```
-
-### Verify It's Working
-
-```bash
-sudo fail2ban-client status adguard-web
-```
-
-**Success**: You should see:
-
-```
-Status for the jail: adguard-web
-|- Filter
-|  |- Currently failed: 0
-|  |- Total failed:     0
-|  `- File list:        /opt/AdGuardHome/AdGuardHome.log
-`- Actions
-   |- Currently banned: 0
-   |- Total banned:     0
-   `- Banned IP list:
-```
-
----
-
 ## Setup Complete!
 
 Your DNS server is now fully operational with:
@@ -525,7 +452,6 @@ Your DNS server is now fully operational with:
 - **Privacy**: Direct recursive resolution via Unbound
 - **Security**: DNSSEC validation, encrypted protocols (DoH/DoT/DoQ)
 - **Ad-blocking**: Custom blocklists via AdGuard Home
-- **Protection**: Fail2Ban guarding against brute-force attacks
 - **Automation**: Auto-renewing SSL certificates
 
 <Note>
