@@ -8,18 +8,242 @@ icon: "shield-halved"
 
 The blocklist is a text file containing domain rules formatted for compatibility with standard ad-blocking engines.
 
-- **Syntax:** [Adblocking Plus (ABP)](https://adblockplus.org/filter-cheatsheet)
-- **Format:** `||domain.com^` (wildcard blocking)
-- **Update Frequency:** Continuous (Community-maintained)
-- **Source:** [GitHub Repository](https://github.com/hapara-fail/blocklist)
+<CardGroup cols={2}>
+  <Card title="Syntax" icon="code">
+    [Adblock Plus (ABP)](https://adblockplus.org/filter-cheatsheet)
+  </Card>
+  <Card title="Update Frequency" icon="arrows-rotate">
+    Continuous — community-maintained
+  </Card>
+  <Card title="Source" icon="github">
+    [hapara-fail/blocklist](https://github.com/hapara-fail/blocklist) on GitHub
+  </Card>
+  <Card title="CDN" icon="bolt">
+    Served via jsDelivr for high availability
+  </Card>
+</CardGroup>
 
 ### CDN Endpoint
 
-For integration, use the jsDelivr CDN endpoint for high availability and low latency:
+For integration, use the jsDelivr CDN endpoint:
 
 ```
 https://cdn.jsdelivr.net/gh/hapara-fail/blocklist@main/blocklist.txt
 ```
+
+---
+
+## Blocking Standards
+
+Our blocklist targets services that surveil, restrict, or compromise the autonomy and privacy of users — particularly students and minors subject to invasive monitoring tools.
+
+### What We Block
+
+<Tabs>
+  <Tab title="Invasive EdTech & School Monitoring">
+    This includes software deployed in educational institutions that goes beyond reasonable network management and crosses into surveillance.
+
+    <AccordionGroup>
+      <Accordion title="Classroom monitoring tools" icon="eye">
+        Products like **Hapara, GoGuardian, Securly, Lightspeed, and Bark** that track browsing history, capture screenshots, read emails, or monitor keystrokes on student devices.
+      </Accordion>
+      <Accordion title="MDM-enforced filtering" icon="mobile">
+        Mobile device management solutions that impose persistent content restrictions or reporting even **outside of school hours or networks** — monitoring students on their personal time.
+      </Accordion>
+      <Accordion title="Activity logging platforms" icon="database">
+        Services that aggregate behavioral data about students and transmit it to third-party servers, often without meaningful transparency or consent.
+      </Accordion>
+    </AccordionGroup>
+
+  </Tab>
+  <Tab title="Parental Control Services">
+    We also target commercial parental control services that are commonly bundled with ISPs, devices, or operating systems and function in ways that undermine user autonomy.
+
+    <AccordionGroup>
+      <Accordion title="Silent monitoring & reporting" icon="user-secret">
+        Services that silently monitor or log browsing and app usage and report it to a third-party cloud — without the user's knowledge or consent.
+      </Accordion>
+      <Accordion title="Opaque network-level restrictions" icon="ban">
+        Products that enforce network-level restrictions without a clear and accessible override mechanism for the device owner.
+      </Accordion>
+      <Accordion title="Data-monetizing 'safety' software" icon="chart-line">
+        Tools that market themselves as "safety" software but collect and monetize behavioral data as a core part of their business model.
+      </Accordion>
+    </AccordionGroup>
+
+  </Tab>
+  <Tab title="What We Do Not Block">
+    <Note>
+      Not everything adjacent to surveillance is a valid block target. We maintain clear exclusions to protect legitimate services.
+    </Note>
+
+    We do **not** block services that:
+
+    - Perform standard, transparent network management (e.g., firewall rules, bandwidth throttling).
+    - Provide parental controls that are limited to on-device filtering **without** external reporting.
+    - Are general-purpose platforms only incidentally used by surveillance vendors (e.g., cloud infrastructure, CDNs).
+
+  </Tab>
+</Tabs>
+
+---
+
+## No-Overblocking Philosophy
+
+<Warning>
+  We deliberately prioritize precision over breadth. **We would rather miss a
+  block than break something legitimate.**
+</Warning>
+
+This blocklist is designed to be **set it and forget it**. That means:
+
+<AccordionGroup>
+  <Accordion
+    title="Low false positive rate is our top priority"
+    icon="bullseye"
+  >
+    We do not add a domain unless we are confident it is exclusively or
+    primarily associated with a surveillance or invasive service. Uncertainty is
+    a reason to wait, not to block.
+  </Accordion>
+  <Accordion title="No broad or shared infrastructure blocks" icon="server">
+    We do not block entire TLDs, IP ranges, or CDNs shared with legitimate
+    services. If a surveillance vendor uses a shared CDN, we only target their
+    specific subdomains.
+  </Accordion>
+  <Accordion title="No speculative blocks" icon="question">
+    We do not speculatively block domains that _might_ be used by a monitored
+    service but serve no confirmed surveillance function. Rules must be backed
+    by evidence.
+  </Accordion>
+  <Accordion title="Broad catch-all rules are rejected" icon="xmark">
+    Even if a rule would block a bad actor, we won't add it if it risks catching
+    unrelated traffic. The collateral damage is not worth it.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  The result is a blocklist that is safe to deploy network-wide — on a home
+  router, Pi-hole, or recursive resolver — without fear of breaking legitimate
+  services. If you notice a false positive, please [report
+  it](#reporting-issues).
+</Tip>
+
+---
+
+## Whitelist Rules
+
+Some monitored vendors host domains that serve dual purposes — authentication portals, student-facing apps, or status endpoints that are needed for a degraded-but-functional experience even when the surveillance service itself is blocked. In these cases, we maintain **explicit allowlist exceptions** using ABP exception syntax:
+
+```
+@@||hello.example.com^
+```
+
+The `@@` prefix instructs compatible engines to **allow** matching traffic, overriding any block rule that would otherwise apply. Allowlist entries are placed **above** their associated block rules in `blocklist.txt`.
+
+### Example Allowlist Entries
+
+<CardGroup cols={2}>
+  <Card title="@@||pass.securly.com^" icon="id-card">
+    **Securly Pass** is a digital hall pass system used by schools. Blocking it
+    breaks hall pass functionality without meaningfully reducing surveillance
+    exposure.
+  </Card>
+  <Card title="@@||status.securly.com^" icon="signal">
+    **Status page only** — no behavioral data collection occurs through this
+    endpoint. Safe to allow with no privacy trade-off.
+  </Card>
+</CardGroup>
+
+### Whitelist Standards
+
+A domain is added to the allowlist only if it meets **all three** of the following criteria:
+
+<Steps>
+  <Step title="Functionally necessary">
+    Blocking it causes breakage for the user beyond just defeating the
+    surveillance tool — for example, it breaks authentication, connectivity, or
+    a student-facing service that is not itself a surveillance endpoint.
+  </Step>
+  <Step title="Does not perform surveillance">
+    The endpoint in question does not transmit behavioral, usage, or personally
+    identifying data to the vendor. We verify this before adding the exception.
+  </Step>
+  <Step title="Concrete, reproducible evidence">
+    We require a real-world report or demonstrated evidence that blocking the
+    domain causes a specific, reproducible problem. Theoretical breakage is not
+    sufficient.
+  </Step>
+</Steps>
+
+---
+
+## Patched Services
+
+Some vendors have implemented what we call **"patched" behavior** — a failsafe specifically designed to defeat DNS-level blocking by holding internet access hostage.
+
+### How Patching Works
+
+Rather than gracefully degrading when their domains are unreachable, patched services **intentionally sever internet connectivity** when they cannot reach their command-and-control (C2) servers.
+
+<Steps>
+  <Step title="Heartbeat is sent">
+    The vendor's agent — a browser extension, system service, or MDM profile —
+    periodically sends a heartbeat to its C2 servers to confirm the monitoring
+    stack is reachable.
+  </Step>
+  <Step title="Heartbeat fails">
+    If the domain is blocked by DNS, the heartbeat fails. Instead of treating
+    this as a routine network error, the agent interprets it as a **policy
+    violation**.
+  </Step>
+  <Step title="Internet access is cut">
+    The agent responds by cutting internet access on the device — redirecting
+    all traffic to a captive block page or dropping connectivity entirely. This
+    affects **all devices regardless of operating system** and persists until
+    the C2 servers are reachable again.
+  </Step>
+</Steps>
+
+<Warning>
+  This behavior is intentional and adversarial. It is designed to coerce users
+  (or network administrators) into unblocking the vendor's infrastructure under
+  the threat of lost connectivity.
+</Warning>
+
+### Known Patched Vendors
+
+<Warning>
+  Adding blocks for patched services will cut off internet access on affected
+  devices. **Do not deploy these rules on networks with devices enrolled in
+  these services without a mitigation plan.**
+</Warning>
+
+Patched vendors are tagged in the blocklist source using the following comment format:
+
+```
+! GoGuardian [PATCHED]
+||goguardian.com^
+```
+
+<CardGroup cols={2}>
+  <Card title="Lightspeed Systems" icon="bolt" color="#EF4444">
+    The Lightspeed Relay agent periodically checks in with its relay
+    infrastructure. If those domains are blocked, it **cuts internet access on
+    all affected devices** until connectivity to Lightspeed's servers is
+    restored.
+  </Card>
+  <Card title="GoGuardian" icon="shield-xmark" color="#EF4444">
+    Extension-based. When its policy servers are unreachable, the GoGuardian
+    extension **cuts internet access on all devices** rather than failing open.
+  </Card>
+</CardGroup>
+
+### Reporting a Patched Service
+
+If you discover a service that severs internet connectivity when its domains are blocked, please [report it](https://github.com/hapara-fail/blocklist/issues/new?template=patched.yml) so we can flag it appropriately and warn other users before they deploy the block.
+
+---
 
 ## Compatibility
 
@@ -69,24 +293,59 @@ The list is designed for engines that support **Adblock Plus (ABP)** syntax for 
   </Step>
 </Steps>
 
+---
+
 # Contributing
 
-We accept community contributions to keep the blocklist effective.
+We accept community contributions to keep the blocklist accurate and effective.
 
 ## Reporting Issues
 
-- **[Request a Block](https://github.com/hapara-fail/blocklist/issues/new?template=addition.yml)**: Suggest a new service or domain.
-- **[Report Patched System](https://github.com/hapara-fail/blocklist/issues/new?template=patched.yml)**: Report a service that inhibits internet access when its domains are blocked.
-- **[Report False Positive](https://github.com/hapara-fail/blocklist/issues/new?template=removal.yml)**: Report broken legitimate sites as a result of our blocklist.
+<CardGroup cols={3}>
+  <Card
+    title="Request a Block"
+    icon="plus"
+    href="https://github.com/hapara-fail/blocklist/issues/new?template=addition.yml"
+  >
+    Suggest a new service or domain to be added to the blocklist.
+  </Card>
+  <Card
+    title="Report Patched System"
+    icon="triangle-exclamation"
+    href="https://github.com/hapara-fail/blocklist/issues/new?template=patched.yml"
+  >
+    Report a service that cuts internet access when its domains are blocked.
+  </Card>
+  <Card
+    title="Report False Positive"
+    icon="flag"
+    href="https://github.com/hapara-fail/blocklist/issues/new?template=removal.yml"
+  >
+    Report a legitimate site that was broken by our blocklist.
+  </Card>
+</CardGroup>
 
 ## Submitting Changes
 
-1. **Fork & Branch**: Create a new branch for your changes.
-2. **Edit `blocklist.txt`**:
-   - Use **Adblock Plus Syntax**: `||domain.com^`
-   - One domain per line.
-   - Place under correct Vendor Header.
-3. **Verify**: Check for trailing spaces or accidental deletions.
-4. **Pull Request**: Submit PR with a clear description.
+<Steps>
+  <Step title="Fork & Branch">
+    Fork the repository and create a new branch for your changes.
+  </Step>
+  <Step title="Edit blocklist.txt">
+    Follow these conventions when editing the file:
+
+    - Use **Adblock Plus syntax**: `||domain.com^`
+    - One domain per line, placed under the correct vendor header.
+    - Mark patched vendors with a `! VendorName [PATCHED]` comment directly above their block rules.
+    - Place allowlist exceptions (`@@||...^`) above their associated block rules with an explanatory comment.
+
+  </Step>
+  <Step title="Verify">
+    Check for trailing spaces, accidental deletions, or rules that could cause false positives before submitting.
+  </Step>
+  <Step title="Pull Request">
+    Submit a PR with a clear description of what was added, removed, or changed and why.
+  </Step>
+</Steps>
 
 For full details, see our [Contributing Guidelines](https://github.com/hapara-fail/blocklist/blob/main/CONTRIBUTING.md) and [Code of Conduct](https://github.com/hapara-fail/blocklist/blob/main/CODE_OF_CONDUCT.md).

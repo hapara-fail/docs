@@ -1,6 +1,6 @@
 ---
 title: "DNS Resolver"
-description: "A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and Google Cloud."
+description: "A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and DigitalOcean."
 icon: "server"
 ---
 
@@ -24,53 +24,56 @@ This guide walks you through setting up a private, secure DNS server using **AdG
 
 ### VM Setup
 
-We recommend Google Cloud Platform (GCP) for hosting, leveraging their free tier:
+We recommend **DigitalOcean** for hosting. Create a new Droplet with the following spec:
 
-1. **Google Cloud E2-micro Instance**:
-   - **Region**: `us-east-1` (or your preferred region)
-   - **Disk**: 30GB Standard Persistent Disk
-   - **OS**: Debian 12 (Bookworm) or 13 (Trixie) x64
-   - **Cost**: Free tier eligible
-2. **Create VM** and reserve a **Static IP address**
+1. **Droplet**: Basic · Premium Intel
+   - **vCPU**: 1
+   - **RAM**: 2 GB
+   - **Disk**: 70 GB SSD
+   - **Transfer**: 2 TB
+   - **OS**: Debian 13 x64
+   - **Cost**: \$16/mo (\$0.024/hr)
+2. **Create Droplet** and reserve a **Reserved IP address** (Networking → Reserved IPs → assign to your Droplet)
 
-### GCP Firewall Policies
+### DigitalOcean Firewall Rules
 
-Create the following firewall rules in your VPC network:
+In the DigitalOcean control panel, go to **Networking → Firewalls → Create Firewall** and add the following **Inbound Rules**, then attach the firewall to your Droplet:
 
 <Steps>
-  <Step title="Allow DNS Traffic">
-    **Rule Name**: `allow-dns-traffic`
-    
-    - **Source IP ranges**: `0.0.0.0/0`
-    - **Protocols/Ports**: Allow `tcp:53` and `udp:53`
+  <Step title="Core DNS &amp; Web Traffic">
+    Add these inbound rules using the preset types where available:
+
+    | Type     | Protocol | Port Range | Sources            |
+    | -------- | -------- | ---------- | ------------------ |
+    | SSH      | TCP      | 22         | All IPv4, All IPv6 |
+    | DNS TCP  | TCP      | 53         | All IPv4, All IPv6 |
+    | HTTP     | TCP      | 80         | All IPv4, All IPv6 |
+    | HTTPS    | TCP      | 443        | All IPv4, All IPv6 |
+    | Custom   | TCP      | 853        | All IPv4, All IPv6 |
+    | DNS UDP  | UDP      | 53         | All IPv4, All IPv6 |
+    | Custom   | UDP      | 853        | All IPv4, All IPv6 |
 
   </Step>
 
-  <Step title="Temporary Setup Access">
-    **Rule Name**: `delete-later` (Remove after setup)
+  <Step title="Temporary Setup Access (delete-later)">
+    Add one more **Custom TCP** inbound rule for the AdGuard Home setup wizard — **remove this rule after setup is complete**:
 
-    - **Source IP ranges**: `[YOUR HOME IP ADDRESS]`
-    - **Protocols/Ports**: Allow `tcp:3000` (AdGuard Home initial setup)
+    | Type   | Protocol | Port Range | Sources          |
+    | ------ | -------- | ---------- | ---------------- |
+    | Custom | TCP      | 3000       | Your home IP only |
 
-  </Step>
-
-  <Step title="Web Interface">
-    **Rule Name**: `default-allow-http`
-    
-    - **Source IP ranges**: `0.0.0.0/0`
-    - **Protocols/Ports**: Allow `tcp:80`
+    <Warning>
+      Label or tag this rule as `delete-later` so you remember to remove it once the setup wizard is finished.
+    </Warning>
 
   </Step>
 </Steps>
 
-### Update Your VM
+### Update Your Droplet
 
-SSH into your new VM and prepare the system:
+SSH into your new Droplet (use the IP shown in the DigitalOcean control panel or your Reserved IP) and prepare the system:
 
 ```bash
-# Remove GCP CLI tools that might cause package conflicts (not needed for our setup)
-sudo dpkg --remove --force-all google-cloud-cli google-cloud-cli-anthoscli
-
 # Update system packages
 sudo apt update
 sudo apt upgrade -y
@@ -392,34 +395,40 @@ sudo service AdGuardHome start
 ### Automate Certificate Renewal
 
 Because AdGuard Home occupies port 80, Certbot needs AGH to be stopped before it can complete the HTTP-01 challenge. Create a pre and post hook to handle this automatically:
+
 ```bash
 # Create pre-renewal hook (stops AGH before renewal)
 sudo nano /etc/letsencrypt/renewal-hooks/pre/stop-adguard.sh
 ```
 
 Paste this content:
+
 ```bash
 #!/bin/bash
 systemctl stop AdGuardHome
 ```
+
 ```bash
 # Create post-renewal hook (starts AGH after renewal)
 sudo nano /etc/letsencrypt/renewal-hooks/post/start-adguard.sh
 ```
 
 Paste this content:
+
 ```bash
 #!/bin/bash
 systemctl start AdGuardHome
 ```
 
 Make both scripts executable:
+
 ```bash
 sudo chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-adguard.sh
 sudo chmod +x /etc/letsencrypt/renewal-hooks/post/start-adguard.sh
 ```
 
 Verify everything works with a dry run:
+
 ```bash
 sudo certbot renew --dry-run
 ```
@@ -429,18 +438,15 @@ sudo certbot renew --dry-run
   the new certificate without manual intervention.
 </Note>
 
-### Update GCP Firewall Rules
+### Update DigitalOcean Firewall Rules
 
 1. **Delete the temporary `delete-later` rule** (port 3000 is no longer needed)
-2. **Create `allow-secure-dns` rule**:
-   - **Source**: `0.0.0.0/0`
-   - **TCP ports**: `443`, `853`
-   - **UDP ports**: `853`
+   - In the DigitalOcean control panel, go to **Networking → Firewalls**, open your firewall, find the Custom TCP 3000 inbound rule, and remove it.
 
 <Warning>
-  **Security Note**: Opening these ports to `0.0.0.0/0` allows the entire
-  internet to use your DNS server. Ensure you have strong authentication on the
-  AdGuard web interface.
+  **Security Note**: The existing rules allow the entire internet to use your
+  DNS server. Ensure you have strong authentication on the AdGuard web
+  interface.
 </Warning>
 
 ---
