@@ -72,15 +72,15 @@ The documentation serves as the central knowledge base for:
     git clone https://github.com/hapara-fail/docs.git
     cd docs
     ```
-2.  **Install Mintlify CLI (global):**
+2.  **Install Mintlify CLI globally:**
     ```bash
-    npm i -g mint
+    pnpm add -g mint
     ```
 3.  **Start the local development server:**
     ```bash
     mint dev
     ```
-    This command will start the documentation server locally, typically at `http://localhost:3000`.
+    This command will start the documentation server locally at `http://localhost:3000`.
 
 ---
 
