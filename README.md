@@ -36,7 +36,7 @@ The documentation serves as the central knowledge base for:
 ├── docs.json           # Mintlify configuration (navigation, theme, etc.)
 ├── favicon.svg         # Site favicon
 ├── index.mdx           # Landing page
-├── website.mdx         # Website project overview
+├── architecture.mdx    # Website architecture overview
 ├── blocklist.mdx       # Blocklist project overview
 ├── self-hosting/       # Self-hosting guides
 │   ├── dns.mdx         # DNS setup guide
@@ -50,7 +50,7 @@ The documentation serves as the central knowledge base for:
 ## 🗺️ Routes
 
 - `/` - Home
-- `/website` - Website Overview
+- `/architecture` - Website Architecture
 - `/blocklist` - Blocklist Overview
 - `/self-hosting/dns` - DNS Self-Hosting Guide
 - `/self-hosting/website` - Website Self-Hosting Guide

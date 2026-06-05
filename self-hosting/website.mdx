@@ -1,10 +1,10 @@
 ---
 title: 'Website'
-description: 'Deploy your own instance of the hapara.fail website on Cloudflare Workers.'
+description: 'Deploy your own instance of the hapara.fail Astro website on Cloudflare Workers.'
 icon: 'globe'
 ---
 
-You can easily deploy your own instance of the website using the button below. This will fork the repository to your GitHub account and deploy it to your Cloudflare account.
+You can deploy your own instance of the v3 website using the button below. This forks the Astro project to your GitHub account, builds the site to `dist/`, and deploys it to Cloudflare Workers with assets served through the Workers Assets binding.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hapara-fail/website)
 
@@ -20,8 +20,8 @@ You can easily deploy your own instance of the website using the button below. T
   </Step>
 
   <Step title="Deploy">
-    Click **Deploy**. Cloudflare will automatically build and deploy the site.
+    Click **Deploy**. Cloudflare will install dependencies, run the Astro build, and deploy the generated `dist/` output.
   </Step>
 </Steps>
 
-Cloudflare will automatically build and deploy the site. You can then configure a custom domain in the Cloudflare dashboard if desired.
+The deployed Worker uses the `@astrojs/cloudflare` adapter and the configuration in `wrangler.jsonc`. You can configure a custom domain in the Cloudflare dashboard after deployment.

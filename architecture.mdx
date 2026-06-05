@@ -1,97 +1,188 @@
 ---
 title: 'Website Architecture'
-description: 'Technical overview of the hapara.fail v2 platform'
+description: 'Technical overview of the hapara.fail v3 platform'
 icon: 'sitemap'
 ---
 
+## Overview
+
+The v3 website is a full Astro application. The project uses Astro v6 for routing, layouts, content, and builds; Svelte 5 islands for interactive UI; MDX content collections for blog posts; and the `@astrojs/cloudflare` adapter for Cloudflare Workers deployment.
+
+Pages live under `src/pages/`, shared UI lives under `src/layouts/` and `src/components/`, blog content lives under `src/content/`, and security headers are applied through Astro middleware in `src/middleware.ts`.
+
 ## Tech Stack
 
-The v2 platform is designed for performance and privacy, leveraging edge computing.
-
 <CardGroup cols={2}>
-  <Card title="Runtime" icon="cloudflare">
-    Cloudflare Workers (Edge Serverless)
+  <Card title="Framework" icon="sparkles">
+    Astro v6 with file-based routing and island architecture.
   </Card>
-  <Card title="Language" icon="js">
-    TypeScript (Worker entry point) & Vanilla JS ES6+ (Frontend)
+  <Card title="Interactive UI" icon="bolt">
+    Svelte v5 islands for search, cookie notice, and text-to-speech.
   </Card>
-  <Card title="Deployment" icon="rocket">
-    Wrangler 4 (Cloudflare CLI)
+  <Card title="Content" icon="file-code">
+    MDX via `@astrojs/mdx`, backed by Astro content collections.
+  </Card>
+  <Card title="Deployment" icon="cloudflare">
+    Cloudflare Workers via `@astrojs/cloudflare` and Wrangler 4.
   </Card>
   <Card title="Assets" icon="images">
-    Workers Assets (Static Hosting)
+    Workers Assets serving the generated `dist/` directory.
   </Card>
-  <Card title="Package Manager" icon="box">
-    pnpm v9+
+  <Card title="Feeds" icon="rss">
+    RSS at `/rss.xml` via `@astrojs/rss`; sitemap via `@astrojs/sitemap`.
   </Card>
-  <Card title="Formatter" icon="code">
-    Prettier
+  <Card title="Icons" icon="icons">
+    Lucide icons through `@lucide/astro` and `@lucide/svelte`.
   </Card>
   <Card title="Fonts" icon="font">
-    Poppins via @fontsource/poppins (self-hosted)
-  </Card>
-  <Card title="Frontend" icon="browser">
-    HTML5, CSS3, Vanilla JavaScript (ES6+)
+    Poppins and Fira Code from `@fontsource`, self-hosted with no external font requests.
   </Card>
 </CardGroup>
 
+## Project Structure
+
+```text
+public/                         # Static files copied as-is to dist/
+scripts/
+  generate-version.js           # Build-time script to stamp version info
+src/
+  assets/                       # Images imported and processed by Astro
+  components/
+    blog/                       # MDX-embeddable Astro components
+      BreachTable.astro
+      CalloutWarning.astro
+      EvidenceBlock.astro
+      PullQuote.astro
+      SectionLabel.astro
+      SourceChip.astro
+      Timeline.astro
+      TimelineItem.astro
+    svelte/                     # Interactive Svelte island components
+      BlogSearch.svelte
+      CookieNotice.svelte
+      TextToSpeech.svelte
+    Footer.astro
+    Head.astro                  # SEO meta tags, fonts, shared head content
+    Header.astro
+    Scripts.astro               # Shared script includes
+  content/
+    blog/                       # MDX blog post source files
+      adguard-home.mdx
+      age-verification.mdx
+      chromeos-wifi-password-extractor.mdx
+      death-of-learning.mdx
+      dns.mdx
+  layouts/
+    BaseLayout.astro            # Shared page layout wrapper
+  pages/
+    blog/
+      index.astro               # Blog index page
+      [...slug].astro           # Dynamic blog post renderer
+    services/
+      dns.astro                 # DNS service page and tool
+    404.astro
+    about.astro
+    contribute.astro
+    index.astro                 # Homepage
+    license.astro
+    privacy.astro
+    rss.xml.ts                  # RSS feed endpoint
+    terms.astro
+  content.config.ts             # Astro content collection schema
+  middleware.ts                 # Security headers and HTTP method enforcement
+astro.config.mjs                # Astro configuration
+package.json
+pnpm-workspace.yaml
+svelte.config.js
+tsconfig.json
+wrangler.jsonc                  # Cloudflare Workers configuration
+```
+
 ## Routing
 
-Routes are handled in `src/worker.ts`. The Worker serves both static assets (via Workers Assets binding) and dynamic routes.
+Astro owns routing through `src/pages/`. The Cloudflare Worker produced by the adapter serves the built site from `dist/` through Workers Assets.
 
 ### Primary Pages
 
-| Route           | Description              |
-| :-------------- | :----------------------- |
-| `/`             | Homepage                 |
-| `/about`        | About page               |
+| Route           | Description             |
+| :-------------- | :---------------------- |
+| `/`             | Homepage                |
+| `/about`        | About page              |
 | `/contribute`   | Contribute / donate page |
-| `/terms`        | Terms of Service         |
-| `/privacy`      | Privacy Policy           |
-| `/license`      | License information      |
-| `/blog`         | Blog index               |
-| `/blog/[slug]`  | Individual blog posts    |
-| `/services/dns` | DNS service page & tool  |
-| `/tool/gfu`     | Google Form Unlocker     |
+| `/terms`        | Terms of Service        |
+| `/privacy`      | Privacy Policy          |
+| `/license`      | License information     |
+| `/blog`         | Blog index              |
+| `/blog/[slug]`  | Individual blog posts   |
+| `/services/dns` | DNS service page & tool |
+| `/rss.xml`      | RSS feed                |
+| `/llms.txt`     | LLM-readable site summary |
 
 ### Blog Posts
 
-Blog slugs are dynamically resolved: `/blog/[slug]` maps to the static file `blog-[slug].html`. Slugs are validated against `[a-z0-9-]` and capped at 200 characters.
+Blog posts are authored as MDX files in `src/content/blog/`, validated through the content collection schema in `src/content.config.ts`, and rendered by `src/pages/blog/[...slug].astro`.
 
-| Route                                      | Title                              |
-| :----------------------------------------- | :--------------------------------- |
-| `/blog/dns`                                | DNS                                |
-| `/blog/adguard-home`                       | AdGuard Home                       |
-| `/blog/age-verification`                   | Age Verification                   |
-| `/blog/chromeos-wifi-password-extractor`   | ChromeOS Wi-Fi Password Extractor  |
-| `/blog/death-of-learning`                  | Death of Learning                  |
-| `/blog/google-form-unlocker`               | Google Form Unlocker               |
-| `/blog/google-form-unlocker-percautions`   | Google Form Unlocker Precautions   |
+| Route                                    | Title                             |
+| :--------------------------------------- | :-------------------------------- |
+| `/blog/dns`                              | DNS                               |
+| `/blog/adguard-home`                     | AdGuard Home                      |
+| `/blog/age-verification`                 | Age Verification                  |
+| `/blog/chromeos-wifi-password-extractor` | ChromeOS Wi-Fi Password Extractor |
+| `/blog/death-of-learning`                | Death of Learning                 |
 
 ### Shortcuts & Redirects
 
-All redirects are permanent (HTTP 301).
+Redirects are configured in `astro.config.mjs`.
 
-| Route      | Destination                |
-| :--------- | :------------------------- |
-| `/bypass`  | `/services/dns`            |
-| `/dns`     | `/services/dns`            |
-| `/forms`   | `/tool/gfu`                |
-| `/discord` | Discord Invite             |
-| `/github`  | GitHub Profile             |
+| Route      | Destination     |
+| :--------- | :-------------- |
+| `/bypass`  | `/services/dns` |
+| `/dns`     | `/services/dns` |
+| `/discord` | Discord Invite  |
+| `/github`  | GitHub Profile  |
+
+## Content Components
+
+The MDX blog can embed reusable Astro components from `src/components/blog/`:
+
+| Component        | Purpose                                      |
+| :--------------- | :------------------------------------------- |
+| `BreachTable`    | Structured breach or evidence tables         |
+| `CalloutWarning` | Prominent warnings inside long-form posts    |
+| `EvidenceBlock`  | Source-backed evidence excerpts and context  |
+| `PullQuote`      | Editorial pull quotes                        |
+| `SectionLabel`   | Small section markers                        |
+| `SourceChip`     | Compact source attribution links             |
+| `Timeline`       | Timeline wrapper for chronological sections  |
+| `TimelineItem`   | Individual timeline entries                  |
+
+## Interactive Islands
+
+Astro renders the site statically by default and hydrates only the components that need client-side behavior:
+
+- `BlogSearch.svelte` powers client-side blog search on the blog index.
+- `TextToSpeech.svelte` adds a Web Speech API audio player to blog posts, including a seekable progress bar, voice selection modal, and floating player UI.
+- `CookieNotice.svelte` displays the site notice as a Svelte island.
+
+## Generated Files
+
+- `/rss.xml` is generated by `@astrojs/rss`.
+- The sitemap is generated by `@astrojs/sitemap`.
+- `/llms.txt` provides an LLM-readable site description.
+- Fira Code is self-hosted for code blocks through `@fontsource`.
 
 ## Security
 
-The Worker enforces strict security response headers on every request:
+Security is enforced in `src/middleware.ts`. The middleware applies strict response headers to every response:
 
-| Header                      | Value / Purpose                                                                                 |
-| :-------------------------- | :---------------------------------------------------------------------------------------------- |
-| `Content-Security-Policy`   | Restricts asset origins; allows connections to DNS monitor subdomains for status checks         |
-| `Strict-Transport-Security` | HSTS with `includeSubDomains; preload` (1 year)                                                 |
-| `X-Content-Type-Options`    | `nosniff`                                                                                       |
-| `X-Frame-Options`           | `SAMEORIGIN`                                                                                    |
-| `Referrer-Policy`           | `strict-origin-when-cross-origin`                                                               |
-| `Permissions-Policy`        | Disables camera, microphone, geolocation, and payment APIs                                      |
+| Header                      | Value / Purpose                                                                                                     |
+| :-------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| `Content-Security-Policy`   | Restricts asset origins; allows DNS status checks against `monitor.dns2.hapara.fail` and blocklist fetch fallbacks. |
+| `Strict-Transport-Security` | HSTS with `includeSubDomains; preload` for one year.                                                                |
+| `X-Content-Type-Options`    | `nosniff`                                                                                                           |
+| `X-Frame-Options`           | `SAMEORIGIN`                                                                                                        |
+| `Referrer-Policy`           | `strict-origin-when-cross-origin`                                                                                   |
+| `Permissions-Policy`        | Disables camera, microphone, geolocation, and payment APIs.                                                         |
 
 Only `GET` and `HEAD` HTTP methods are accepted; all others return `405 Method Not Allowed`.
 
@@ -101,7 +192,7 @@ Only `GET` and `HEAD` HTTP methods are accepted; all others return `405 Method N
 
 - Node.js v18 or higher
 - [pnpm](https://pnpm.io/) v9 or higher
-- A Cloudflare account with Wrangler authenticated (`wrangler login`)
+- A Cloudflare account with Wrangler authenticated (`wrangler login`) for deployment
 
 ### Local Setup
 
@@ -121,29 +212,27 @@ Only `GET` and `HEAD` HTTP methods are accepted; all others return `405 Method N
     pnpm install
     ```
   </Step>
-  <Step title="Configure (optional)">
-    Create or edit `.dev.vars` for any local environment variables needed during development.
-  </Step>
   <Step title="Run">
-    Start the local development server:
+    Start the Astro development server:
 
     ```bash
     pnpm run dev
     ```
 
-    This runs `generate-version` then `wrangler dev`, serving the site at `http://127.0.0.1:8787`.
+    This starts the local Astro dev server at `http://localhost:4321` with hot module reloading.
   </Step>
 </Steps>
 
 ### Available Scripts
 
-| Script              | Description                                                  |
-| :------------------ | :----------------------------------------------------------- |
-| `pnpm run dev`      | Generate version data + start local Wrangler dev server      |
-| `pnpm run preview`  | Generate version data + run Wrangler dev in `--remote` mode  |
-| `pnpm run deploy`   | Generate version data + deploy to Cloudflare Workers         |
-| `pnpm run build`    | Run `generate-version` only (stamps `version-data.js`)       |
-| `pnpm run format`   | Format all files with Prettier                               |
+| Script                       | Description                                             |
+| :--------------------------- | :------------------------------------------------------ |
+| `pnpm run dev`               | Start the Astro development server.                     |
+| `pnpm run build`             | Generate the version stamp and build the site to `dist/`. |
+| `pnpm run preview`           | Build and run Wrangler dev against the built `dist/`.   |
+| `pnpm run deploy`            | Build and deploy to Cloudflare Workers.                 |
+| `pnpm run format` / `fmt`    | Format all files with Prettier.                         |
+| `pnpm run generate-version`  | Stamp version data only; called automatically by build. |
 
 ### Deployment
 
@@ -153,4 +242,4 @@ Ensure Wrangler is installed and authenticated (`wrangler login`), then run:
 pnpm run deploy
 ```
 
-This generates the version stamp, then builds and deploys the project to the `hapara-fail` Worker specified in `wrangler.jsonc`.
+This generates the version stamp, runs `astro build` to produce `dist/`, then deploys via `wrangler deploy` to the `hapara-fail` Worker defined in `wrangler.jsonc`. Assets are served from `dist/` through the Workers Assets binding.
