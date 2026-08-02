@@ -1,6 +1,6 @@
 ---
 title: "DNS Resolver"
-description: "A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home, Unbound, and DigitalOcean."
+description: "A complete guide to self-hosting the hapara.fail DNS service using AdGuard Home and Unbound."
 icon: "server"
 ---
 
@@ -22,22 +22,13 @@ This guide walks you through setting up a private, secure DNS server using **AdG
 
 ## Prerequisites
 
-### VM Setup
+### Server Setup
 
-We recommend **DigitalOcean** for hosting. Create a new Droplet with the following spec:
+Use any hosting provider. This guide requires **Debian 13 x64**.
 
-1. **Droplet**: Basic · Premium Intel
-   - **vCPU**: 1
-   - **RAM**: 2 GB
-   - **Disk**: 70 GB SSD
-   - **Transfer**: 2 TB
-   - **OS**: Debian 13 x64
-   - **Cost**: \$16/mo (\$0.024/hr)
-2. **Create Droplet** and reserve a **Reserved IP address** (Networking → Reserved IPs → assign to your Droplet)
+### Firewall Rules
 
-### DigitalOcean Firewall Rules
-
-In the DigitalOcean control panel, go to **Networking → Firewalls → Create Firewall** and add the following **Inbound Rules**, then attach the firewall to your Droplet:
+In your provider's networking or firewall settings, add the following **Inbound Rules** and attach them to your server:
 
 <Steps>
   <Step title="Core DNS &amp; Web Traffic">
@@ -69,9 +60,9 @@ In the DigitalOcean control panel, go to **Networking → Firewalls → Create F
   </Step>
 </Steps>
 
-### Update Your Droplet
+### Update Your Server
 
-SSH into your new Droplet (use the IP shown in the DigitalOcean control panel or your Reserved IP) and prepare the system:
+SSH into your server using its public IP address and prepare the system:
 
 ```bash
 # Update system packages
@@ -438,10 +429,10 @@ sudo certbot renew --dry-run
   the new certificate without manual intervention.
 </Note>
 
-### Update DigitalOcean Firewall Rules
+### Update Firewall Rules
 
 1. **Delete the temporary `delete-later` rule** (port 3000 is no longer needed)
-   - In the DigitalOcean control panel, go to **Networking → Firewalls**, open your firewall, find the Custom TCP 3000 inbound rule, and remove it.
+   - In your provider's firewall settings, find the Custom TCP 3000 inbound rule and remove it.
 
 <Warning>
   **Security Note**: The existing rules allow the entire internet to use your
